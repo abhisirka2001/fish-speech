@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import loralib as lora
 
-
+from omegaconf import OmegaConf
 @dataclass
 class LoraConfig:
     r: int
@@ -12,6 +12,7 @@ class LoraConfig:
 
 def setup_lora(model, lora_config):
     # Replace the embedding layer with a LoRA layer
+    
     model.embeddings = lora.Embedding(
         num_embeddings=model.embeddings.num_embeddings,
         embedding_dim=model.embeddings.embedding_dim,
@@ -78,7 +79,17 @@ def setup_lora(model, lora_config):
     # Mark only the LoRA layers as trainable
     lora.mark_only_lora_as_trainable(model, bias="none")
 
-
+def load_lora_config(config_path: str) -> LoraConfig:
+    # Load the configuration file
+    config = OmegaConf.load(config_path)
+    
+    # Return the LoraConfig instance
+    return LoraConfig(
+        r=config.r,
+        lora_alpha=config.lora_alpha,
+        lora_dropout=config.get('lora_dropout', 0.0),  # Default value if not specified
+    )
+    
 def get_merged_state_dict(model):
     # This line will merge the state dict of the model and the LoRA parameters
     model.eval()

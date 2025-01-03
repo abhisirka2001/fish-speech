@@ -5,7 +5,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-
+from omegaconf import OmegaConf
 import torch
 import torch.nn as nn
 from einops import rearrange
@@ -19,7 +19,7 @@ from transformers import AutoTokenizer
 from fish_speech.tokenizer import SEMANTIC_TOKENS, FishTokenizer
 from fish_speech.utils import RankedLogger
 
-from .lora import LoraConfig, setup_lora
+from .lora import LoraConfig, setup_lora, load_lora_config
 
 log = RankedLogger(__name__, rank_zero_only=True)
 
@@ -373,6 +373,7 @@ class BaseTransformer(nn.Module):
         rope_base: int | None = None,
         is_agent: bool = False,
     ) -> "BaseTransformer":
+        print(path)
         config = BaseModelArgs.from_pretrained(str(path))
         if max_length is not None:
             config.max_seq_len = max_length
@@ -395,7 +396,9 @@ class BaseTransformer(nn.Module):
 
         log.info(f"Loading model from {path}, config: {config}")
         model = model_cls(config, tokenizer=tokenizer)
+        print(lora_config)
 
+        lora_config = load_lora_config("/workspace/FISHSPEECH/fish-speech/fish_speech/configs/lora/r_8_alpha_16.yaml")
         if lora_config is not None:
             setup_lora(model, lora_config)
             log.info(f"LoRA setup: {lora_config}")
